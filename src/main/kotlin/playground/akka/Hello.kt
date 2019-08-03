@@ -25,7 +25,7 @@ class Greeter : AbstractActor() {
     }
 
     override fun createReceive(): Receive {
-        return receiveBuilder().match(Greet::class.java, fun (greet: Greet) {
+        return receiveBuilder().match(Greet::class.java, fun(greet: Greet) {
             println("Hello ${greet.whom}")
         }).matchAny(fun(any: Any) {
             println("Unknown message received, ignoring")
