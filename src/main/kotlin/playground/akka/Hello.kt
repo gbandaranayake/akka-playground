@@ -59,19 +59,27 @@ class WelcomeDrinkGreeter(private val message: String, private val printer: Acto
             context.actorSelection("/user/day-greeter-actor/waiter").resolveOne(Duration.ofMillis(500))
                 .thenAccept { ref -> ref.tell(Waiter.Serve(it.guest), self) }
                 .handle { t, u ->
-                    val cause = u.cause
-                    if (cause is ActorNotFound) {
-                        val props = Props.create(Waiter::class.java) { Waiter() }
-                        val waiterRef = context.actorOf(props, "waiter")
-                        waiterRef.tell(Waiter.Serve(it.guest), self)
-                    } else {
-                        println("Error occurred while finding the waiter actor ref $t")
-                    }
+                    handleChildException(u, it, t)
                 }
         }.match(Terminated::class.java) {
             val props = Props.create(Waiter::class.java) { Waiter() }
             context.actorOf(props, "waiter")
         }.build().orElse(super.createReceive())
+    }
+
+    private fun handleChildException(
+        u: Throwable,
+        it: WhoToServe,
+        t: Void?
+    ) {
+        val cause = u.cause
+        if (cause is ActorNotFound) {
+            val props = Props.create(Waiter::class.java) { Waiter() }
+            val waiterRef = context.actorOf(props, "waiter")
+            waiterRef.tell(Waiter.Serve(it.guest), self)
+        } else {
+            println("Error occurred while finding the waiter actor ref $u")
+        }
     }
 
     object DefaultDecider : PartialFunction<Throwable, SupervisorStrategy.Directive> {
