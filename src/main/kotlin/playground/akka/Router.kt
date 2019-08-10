@@ -3,13 +3,12 @@ package playground.akka
 import akka.actor.AbstractActor
 import akka.event.Logging
 import java.io.Serializable
-import akka.routing.RoundRobinRoutingLogic
-import akka.routing.Router
-import akka.routing.ActorRefRoutee
 import akka.actor.Props
-import akka.routing.Routee
 import java.util.ArrayList
 import akka.actor.*
+import java.time.Clock.system
+import akka.actor.ActorRef
+import akka.routing.*
 
 
 class Worker : AbstractActor() {
@@ -25,30 +24,28 @@ class Worker : AbstractActor() {
 data class Work(val workLoad: String) : Serializable
 
 class Master : AbstractActor() {
-    private lateinit var router: Router
+    private lateinit var router: ActorRef
 
     init {
-        val routees = ArrayList<Routee>()
+        /*val routees = ArrayList<Routee>()
         for (i in 0..4) {
             val r = context.actorOf(Props.create(Worker::class.java, { Worker() }), "worker-actor-$i")
             context.watch(r)
             routees.add(ActorRefRoutee(r))
-        }
-        router = Router(RoundRobinRoutingLogic(), routees)
+        }*/
+//        router = context.actorOf(FromConfig.getInstance().props(Props.create(Worker::class.java, { Worker() })), "router1")
+        router = context.actorOf(FromConfig.getInstance().props(Props.create(Worker::class.java, { Worker() })), "poolWithDispatcher")
     }
 
     override fun createReceive(): Receive {
         return receiveBuilder()
             .match(
                 Work::class.java
-            ) { message -> router.route(message, sender) }
+            ) { message -> router.tell(message, sender) }
             .match(
                 Terminated::class.java
             ) { message ->
-                router = router.removeRoutee(message.actor())
-                val r = context.actorOf(Props.create(Worker::class.java, { Worker() }))
-                context.watch(r)
-                router = router.addRoutee(ActorRefRoutee(r))
+                println("Worker actor terminated $message")
             }
             .build()
     }
