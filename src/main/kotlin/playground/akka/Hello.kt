@@ -68,6 +68,9 @@ class WelcomeDrinkGreeter(private val message: String, private val printer: Acto
                         println("Error occurred while finding the waiter actor ref $t")
                     }
                 }
+        }.match(Terminated::class.java) {
+            val props = Props.create(Waiter::class.java) { Waiter() }
+            context.actorOf(props, "waiter")
         }.build().orElse(super.createReceive())
     }
 
