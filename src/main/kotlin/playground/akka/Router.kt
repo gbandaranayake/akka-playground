@@ -4,12 +4,9 @@ import akka.actor.AbstractActor
 import akka.event.Logging
 import java.io.Serializable
 import akka.actor.Props
-import java.util.ArrayList
 import akka.actor.*
-import java.time.Clock.system
 import akka.actor.ActorRef
 import akka.routing.*
-
 
 class Worker : AbstractActor() {
     private val log = Logging.getLogger(context.system, this)
@@ -24,7 +21,8 @@ class Worker : AbstractActor() {
 data class Work(val workLoad: String) : Serializable
 
 class Master : AbstractActor() {
-    private lateinit var router: ActorRef
+    private var workRouter: ActorRef =
+        context.actorOf(FromConfig.getInstance().props(Props.create(Worker::class.java, { Worker() })), "router1")
 
     init {
         /*val routees = ArrayList<Routee>()
@@ -33,20 +31,24 @@ class Master : AbstractActor() {
             context.watch(r)
             routees.add(ActorRefRoutee(r))
         }*/
-//        router = context.actorOf(FromConfig.getInstance().props(Props.create(Worker::class.java, { Worker() })), "router1")
-        router = context.actorOf(FromConfig.getInstance().props(Props.create(Worker::class.java, { Worker() })), "poolWithDispatcher")
+        //        router = context.actorOf(FromConfig.getInstance().props(Props.create(Worker::class.java, { Worker() })), "poolWithDispatcher")
     }
 
     override fun createReceive(): Receive {
         return receiveBuilder()
             .match(
                 Work::class.java
-            ) { message -> router.tell(message, sender) }
+            ) { message -> workRouter.tell(message, sender) }
             .match(
                 Terminated::class.java
             ) { message ->
                 println("Worker actor terminated $message")
             }
             .build()
+    }
+
+    override fun preStart() {
+        super.preStart()
+        println("Actor created in ${context.system.name()}")
     }
 }

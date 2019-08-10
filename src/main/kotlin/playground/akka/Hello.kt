@@ -2,12 +2,22 @@ package playground.akka
 
 import akka.actor.*
 import akka.event.Logging
+import akka.routing.FromConfig
 import scala.Option
 import scala.PartialFunction
 import java.time.Duration
 
 fun main(args: Array<String>) {
     runRouterExample()
+}
+
+private fun runRemoteRouterActorSystem() {
+    val actorSystem = ActorSystem.create("routerActorSystem")
+    val log = Logging.getLogger(actorSystem, actorSystem)
+    Thread.sleep(2000)
+    log.info("Enter any key to exit")
+    System.`in`.read()
+    actorSystem.terminate()
 }
 
 fun runChildActorSpawning() {
@@ -31,9 +41,9 @@ fun runChildActorSpawning() {
 }
 
 fun runRouterExample() {
-    val actorSystem = ActorSystem.create("testSystem")
+    val actorSystem = ActorSystem.create("actorSystem")
     val log = Logging.getLogger(actorSystem, actorSystem)
-    val master = actorSystem.actorOf(Props.create(Master::class.java, { Master() }), "router-master")
+    val master = actorSystem.actorOf(FromConfig.getInstance().props(), "router-master")
     master.tell(Work("Workload 1"), master)
     master.tell(Work("Workload 2"), master)
     master.tell(Work("Workload 3"), master)
