@@ -2,26 +2,32 @@ package playground.akka
 
 import akka.actor.*
 import akka.event.Logging
+import java.time.Duration
 
 fun main(args: Array<String>) {
+    runChildActorSpawning()
+}
+
+fun runChildActorSpawning() {
     val actorSystem = ActorSystem.create("testSystem")
     val printerProps = Props.create(Printer::class.java, ::Printer)
     val printer = actorSystem.actorOf(printerProps, "printer-actor")
     val morningGreeterActor = actorSystem.actorOf(Greeter.props("Good morning ", printer), "morning-greeter-actor")
-    val goodDayGreeterActor = actorSystem.actorOf(Greeter.props("Good day to you ", printer), "day-greeter-actor")
-    morningGreeterActor.tell(Greeter.WhoToGreet("John"), actorSystem.actorSelection("/user").anchor())
-    goodDayGreeterActor.tell(Greeter.WhoToGreet("John"), actorSystem.actorSelection("/user").anchor())
-    morningGreeterActor.tell(Greeter.Greet, actorSystem.actorSelection("/user").anchor())
-    goodDayGreeterActor.tell(Greeter.Greet, actorSystem.actorSelection("/user").anchor())
+    val goodDayGreeterActor = actorSystem.actorOf(WelcomeDrinkGreeter.props("Good day to you ", printer), "day-greeter-actor")
+    morningGreeterActor.tell(Greeter.WhoToGreet("John"), ActorRef.noSender())
+    goodDayGreeterActor.tell(WelcomeDrinkGreeter.WhoToServe("John"), ActorRef.noSender())
+    goodDayGreeterActor.tell(WelcomeDrinkGreeter.WhoToServe("John"), ActorRef.noSender())
+    goodDayGreeterActor.tell(Greeter.WhoToGreet("John"), ActorRef.noSender())
+    morningGreeterActor.tell(Greeter.Greet, ActorRef.noSender())
+    goodDayGreeterActor.tell(Greeter.Greet, ActorRef.noSender())
     Thread.sleep(5000)
     actorSystem.terminate()
 }
 
-class Greeter(private val message: String, private val printer: ActorRef) : AbstractActor() {
+open class Greeter(private val message: String, private val printer: ActorRef) : AbstractActor() {
     companion object {
-        fun props(message: String, printer: ActorRef): Props = Props.create(Greeter::class.java) {
-            Greeter(message, printer)
-        }
+        fun props(message: String, printer: ActorRef): Props =
+            Props.create(Greeter::class.java) { Greeter(message, printer) }
     }
 
     var greeting = ""
@@ -39,6 +45,32 @@ class Greeter(private val message: String, private val printer: ActorRef) : Abst
     object Greet
 }
 
+class WelcomeDrinkGreeter(private val message: String, private val printer: ActorRef) : Greeter(message, printer) {
+    companion object {
+        fun props(message: String, printer: ActorRef): Props =
+            Props.create(WelcomeDrinkGreeter::class.java) { WelcomeDrinkGreeter(message, printer) }
+    }
+
+    override fun createReceive(): Receive {
+        return receiveBuilder().match(WhoToServe::class.java) {
+            context.actorSelection("/user/day-greeter-actor/waiter").resolveOne(Duration.ofMillis(500))
+                .thenAccept { ref -> ref.tell(Waiter.Serve(it.guest), self)}
+                .handle {t, u ->
+                    val cause = u.cause
+                    if (cause is ActorNotFound) {
+                        val props = Props.create(Waiter::class.java) { Waiter() }
+                        val waiterRef = context.actorOf(props, "waiter")
+                        waiterRef.tell(Waiter.Serve(it.guest), self)
+                    } else {
+                        println("Error occurred while finding the waiter actor ref $t")
+                    }
+                }
+        }.build().orElse(super.createReceive())
+    }
+
+    data class WhoToServe(val guest: String)
+}
+
 class Printer : AbstractActor() {
     private val log = Logging.getLogger(context.system, this)
 
@@ -49,4 +81,25 @@ class Printer : AbstractActor() {
     }
 
     data class Greeting(val greeting: String)
+}
+
+class Waiter : AbstractActor() {
+    private val log = Logging.getLogger(context.system, this)
+
+    private val servedGuests = HashSet<String>(20)
+
+    override fun createReceive(): Receive {
+        return receiveBuilder().match(Serve::class.java) {
+            log.info("Here, take this glass of ice cold drink ${it.receiver} \\_/")
+            servedGuests.add(it.receiver)
+            self.tell(CollectGlass(it.receiver), ActorRef.noSender())
+        }.match(CollectGlass::class.java) {
+            Thread.sleep(10000)
+            log.info("Hope you enjoyed your drink ${it.glassHolder} <= \\_/")
+            servedGuests.remove(it.glassHolder)
+        }.build()
+    }
+
+    data class Serve(val receiver: String)
+    data class CollectGlass(val glassHolder: String)
 }
