@@ -13,16 +13,18 @@ fun main(args: Array<String>) {
 
 private fun runRemoteRouterActorSystem() {
     val actorSystem = ActorSystem.create("routerActorSystem")
-    val log = Logging.getLogger(actorSystem, actorSystem)
-    Thread.sleep(2000)
-    log.info("Enter any key to exit")
-    System.`in`.read()
-    actorSystem.terminate()
+    try {
+        val log = Logging.getLogger(actorSystem, "runRemoteRouterActorSystem")
+//        log.info("Enter any key to exit")
+//        System.`in`.read()
+    } finally {
+//        actorSystem.terminate()
+    }
 }
 
 fun runChildActorSpawning() {
     val actorSystem = ActorSystem.create("testSystem")
-    val log = Logging.getLogger(actorSystem, actorSystem)
+    val log = Logging.getLogger(actorSystem, "runChildActorSpawning")
     val printerProps = Props.create(Printer::class.java, ::Printer)
     val printer = actorSystem.actorOf(printerProps, "printer-actor")
     val morningGreeterActor = actorSystem.actorOf(Greeter.props("Good morning ", printer), "morning-greeter-actor")
@@ -42,17 +44,20 @@ fun runChildActorSpawning() {
 
 fun runRouterExample() {
     val actorSystem = ActorSystem.create("actorSystem")
-    val log = Logging.getLogger(actorSystem, actorSystem)
-    val master = actorSystem.actorOf(Props.create(Master::class.java, { Master() }), "router-master")
-    master.tell(Work("Workload 1"), master)
-    master.tell(Work("Workload 2"), master)
-    master.tell(Work("Workload 3"), master)
-    master.tell(Work("Workload 4"), master)
-    master.tell(Work("Workload 5"), master)
-    Thread.sleep(2000)
-    log.info("Enter any key to exit")
-    System.`in`.read()
-    actorSystem.terminate()
+    try {
+        val log = Logging.getLogger(actorSystem, "runRouterExample")
+        val master = actorSystem.actorOf(Props.create(Master::class.java, { Master() }), "router-master")
+        master.tell(Work("Workload 1"), master)
+        master.tell(Work("Workload 2"), master)
+        master.tell(Work("Workload 3"), master)
+        master.tell(Work("Workload 4"), master)
+        master.tell(Work("Workload 5"), master)
+        Thread.sleep(2000)
+//        log.info("Enter any key to exit")
+//        System.`in`.read()
+    } finally {
+//        actorSystem.terminate()
+    }
 }
 
 open class Greeter(private val message: String, private val printer: ActorRef) : AbstractActor() {
