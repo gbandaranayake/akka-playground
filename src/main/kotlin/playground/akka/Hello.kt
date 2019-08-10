@@ -43,7 +43,7 @@ fun runChildActorSpawning() {
 fun runRouterExample() {
     val actorSystem = ActorSystem.create("actorSystem")
     val log = Logging.getLogger(actorSystem, actorSystem)
-    val master = actorSystem.actorOf(FromConfig.getInstance().props(), "router-master")
+    val master = actorSystem.actorOf(Props.create(Master::class.java, { Master() }), "router-master")
     master.tell(Work("Workload 1"), master)
     master.tell(Work("Workload 2"), master)
     master.tell(Work("Workload 3"), master)
