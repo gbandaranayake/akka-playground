@@ -12,6 +12,7 @@ fun main(args: Array<String>) {
 
 fun runChildActorSpawning() {
     val actorSystem = ActorSystem.create("testSystem")
+    val log = Logging.getLogger(actorSystem, actorSystem)
     val printerProps = Props.create(Printer::class.java, ::Printer)
     val printer = actorSystem.actorOf(printerProps, "printer-actor")
     val morningGreeterActor = actorSystem.actorOf(Greeter.props("Good morning ", printer), "morning-greeter-actor")
@@ -23,18 +24,25 @@ fun runChildActorSpawning() {
     goodDayGreeterActor.tell(Greeter.WhoToGreet("John"), ActorRef.noSender())
     morningGreeterActor.tell(Greeter.Greet, ActorRef.noSender())
     goodDayGreeterActor.tell(Greeter.Greet, ActorRef.noSender())
-    Thread.sleep(5000)
+    Thread.sleep(2000)
+    log.info("Enter any key to exit")
+    System.`in`.read()
     actorSystem.terminate()
 }
 
 fun runRouterExample() {
     val actorSystem = ActorSystem.create("testSystem")
+    val log = Logging.getLogger(actorSystem, actorSystem)
     val master = actorSystem.actorOf(Props.create(Master::class.java, { Master() }), "router-master")
     master.tell(Work("Workload 1"), master)
     master.tell(Work("Workload 2"), master)
     master.tell(Work("Workload 3"), master)
     master.tell(Work("Workload 4"), master)
     master.tell(Work("Workload 5"), master)
+    Thread.sleep(2000)
+    log.info("Enter any key to exit")
+    System.`in`.read()
+    actorSystem.terminate()
 }
 
 open class Greeter(private val message: String, private val printer: ActorRef) : AbstractActor() {
