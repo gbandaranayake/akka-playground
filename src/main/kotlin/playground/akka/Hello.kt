@@ -7,7 +7,7 @@ import scala.PartialFunction
 import java.time.Duration
 
 fun main(args: Array<String>) {
-    runChildActorSpawning()
+    runRouterExample()
 }
 
 fun runChildActorSpawning() {
@@ -25,6 +25,16 @@ fun runChildActorSpawning() {
     goodDayGreeterActor.tell(Greeter.Greet, ActorRef.noSender())
     Thread.sleep(5000)
     actorSystem.terminate()
+}
+
+fun runRouterExample() {
+    val actorSystem = ActorSystem.create("testSystem")
+    val master = actorSystem.actorOf(Props.create(Master::class.java, { Master() }), "router-master")
+    master.tell(Work("Workload 1"), master)
+    master.tell(Work("Workload 2"), master)
+    master.tell(Work("Workload 3"), master)
+    master.tell(Work("Workload 4"), master)
+    master.tell(Work("Workload 5"), master)
 }
 
 open class Greeter(private val message: String, private val printer: ActorRef) : AbstractActor() {
