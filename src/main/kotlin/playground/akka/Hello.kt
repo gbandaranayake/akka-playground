@@ -15,10 +15,10 @@ private fun runRemoteRouterActorSystem() {
     val actorSystem = ActorSystem.create("routerActorSystem")
     try {
         val log = Logging.getLogger(actorSystem, "runRemoteRouterActorSystem")
-//        log.info("Enter any key to exit")
-//        System.`in`.read()
+        log.info("Enter any key to exit")
+        System.`in`.read()
     } finally {
-//        actorSystem.terminate()
+        actorSystem.terminate()
     }
 }
 
@@ -52,11 +52,10 @@ fun runRouterExample() {
         master.tell(Work("Workload 3"), master)
         master.tell(Work("Workload 4"), master)
         master.tell(Work("Workload 5"), master)
-        Thread.sleep(2000)
-//        log.info("Enter any key to exit")
-//        System.`in`.read()
+        log.info("Enter any key to exit")
+        System.`in`.read()
     } finally {
-//        actorSystem.terminate()
+        actorSystem.terminate()
     }
 }
 

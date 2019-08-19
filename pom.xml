@@ -36,7 +36,7 @@
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-cluster-tools_2.12</artifactId>
+            <artifactId>akka-cluster_2.12</artifactId>
             <version>2.5.24</version>
         </dependency>
         <dependency>
@@ -117,6 +117,14 @@
                                     <include>*:*</include>
                                 </includes>
                             </artifactSet>
+                            <filters>
+                                <filter>
+                                    <artifact>akka-playground:akka-playground</artifact>
+                                    <excludes>
+                                        <exclude>**/*.conf</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                             <transformers>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
@@ -143,7 +151,7 @@
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${basedir}/target/extra-resources</outputDirectory>
+                            <outputDirectory>${basedir}/target</outputDirectory>
                             <resources>
                                 <resource>
                                     <directory>src/main/resources</directory>

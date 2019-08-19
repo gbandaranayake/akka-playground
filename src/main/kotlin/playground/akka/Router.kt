@@ -16,6 +16,10 @@ class Worker : AbstractActor() {
             log.info("Doing the ${it.workLoad}")
         }.build()
     }
+
+    override fun preStart() {
+        log.info("Worker actor created")
+    }
 }
 
 data class Work(val workLoad: String) : Serializable
