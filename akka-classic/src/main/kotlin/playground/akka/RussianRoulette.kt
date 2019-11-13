@@ -2,7 +2,6 @@ package playground.akka
 
 import akka.actor.AbstractActor
 import akka.actor.ActorRef
-import akka.actor.Props
 import java.lang.IllegalStateException
 import kotlin.random.Random
 
@@ -33,7 +32,10 @@ class Table(noOfSeats: Int) : AbstractActor() {
     override fun createReceive(): Receive {
         return receiveBuilder().match(AddSeatMessage::class.java) {
             when {
-                seats.contains<Seat?>(null) -> it.occupier.tell(Player.TableIsFullMessage(self()), self())
+                seats.contains<Seat?>(null) -> it.occupier.tell(
+                    Player.TableIsFullMessage(
+                        self()
+                    ), self())
                 else -> seats[seats.indexOfFirst { false }] = Seat(it.occupier)
             }
         }.match(RemoveSeatMessage::class.java) {

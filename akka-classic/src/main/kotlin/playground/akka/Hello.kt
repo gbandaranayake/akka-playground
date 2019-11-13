@@ -2,7 +2,6 @@ package playground.akka
 
 import akka.actor.*
 import akka.event.Logging
-import akka.routing.FromConfig
 import scala.Option
 import scala.PartialFunction
 import java.time.Duration
@@ -83,7 +82,12 @@ open class Greeter(private val message: String, private val printer: ActorRef) :
 class WelcomeDrinkGreeter(private val message: String, private val printer: ActorRef) : Greeter(message, printer) {
     companion object {
         fun props(message: String, printer: ActorRef): Props =
-            Props.create(WelcomeDrinkGreeter::class.java) { WelcomeDrinkGreeter(message, printer) }
+            Props.create(WelcomeDrinkGreeter::class.java) {
+                WelcomeDrinkGreeter(
+                    message,
+                    printer
+                )
+            }
     }
 
     override fun createReceive(): Receive {
